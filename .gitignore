@@ -1,0 +1,43 @@
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+.next/
+out/
+dist/
+build/
+
+# Credenciales — NUNCA subir
+.env
+.env.local
+.env.production
+etl/.env
+etl/logs/
+
+# Next.js
+.next/
+*.tsbuildinfo
+next-env.d.ts
+
+# PHP
+etl/vendor/
+etl/logs/*.log
+
+# Supabase local
+.branches/
+.temp/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Exports generados
+exports/
