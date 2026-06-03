@@ -12,6 +12,7 @@ import { ResumenFacturaPage } from './pages/emssanar/ResumenFacturaPage'
 import { SuraEventoPage }    from './pages/sura/SuraEventoPage'
 // Páginas Nueva EPS
 import { NuEPSPage }         from './pages/nuevaeps/NuEPSPage'
+import { NuEPSResumenPage }  from './pages/nuevaeps/NuEPSResumenPage'
 // Páginas otras aseguradoras
 import { DispensarioPage }   from './pages/dispensario/Dispensario'
 
@@ -58,8 +59,9 @@ export default function App() {
           <Route path="sura/evento/contributivo" element={<SuraEventoPage tipo="contributivo" />} />
 
           {/* ── Nueva EPS ────────────────────────────────────────── */}
-          <Route path="nueva-eps/egreso" element={<NuEPSPage tipo="egreso" />} />
-          <Route path="nueva-eps/venta"  element={<NuEPSPage tipo="venta"  />} />
+          <Route path="nueva-eps/egreso"  element={<NuEPSPage        tipo="egreso" />} />
+          <Route path="nueva-eps/venta"   element={<NuEPSPage        tipo="venta"  />} />
+          <Route path="nueva-eps/resumen" element={<NuEPSResumenPage />} />
 
           {/* ── Asmet / Dispensario ──────────────────────────────── */}
           <Route path="asmet-salud"  element={<ResumenPage   aseguradora="emssanar-alta-sub" />} />

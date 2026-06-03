@@ -33,6 +33,7 @@ const navItems = [
   { label: "Dispensario Medico", icon: Pill,         href: "dispensario" },
   { label: "Asmet Salud",        icon: FlaskConical, href: "asmet-salud" },
   { label: "Nueva EPS", icon: Building2, children: [
+    { label: "Resumen",    href: "nueva-eps/resumen" },
     { label: "Por Egreso", href: "nueva-eps/egreso" },
     { label: "Por Venta",  href: "nueva-eps/venta" },
   ]},
