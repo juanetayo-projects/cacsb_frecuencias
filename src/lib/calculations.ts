@@ -1,5 +1,5 @@
-/**
- * Lógica de cálculo de cumplimiento y valores del dashboard
+﻿/**
+ * LÃ³gica de cÃ¡lculo de cumplimiento y valores del dashboard
  */
 
 /**
@@ -18,7 +18,7 @@ export function colorCumplimiento(pct: number): 'ok' | 'alert' {
 }
 
 /**
- * Clases Tailwind para filas de tabla según cumplimiento
+ * Clases Tailwind para filas de tabla segÃºn cumplimiento
  */
 export function claseFilaCumplimiento(pct: number): string {
   return pct >= 100
@@ -39,14 +39,14 @@ export function formatearPesos(valor: number): string {
 }
 
 /**
- * Formatea número con separadores de miles
+ * Formatea nÃºmero con separadores de miles
  */
 export function formatearNumero(valor: number): string {
   return new Intl.NumberFormat('es-CO').format(valor)
 }
 
 /**
- * Nombre del mes en español
+ * Nombre del mes en espaÃ±ol
  */
 export function nombreMes(mes: number): string {
   const meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -55,9 +55,12 @@ export function nombreMes(mes: number): string {
 }
 
 /**
- * Genera rango de años disponibles (3 años atrás + actual)
+ * Genera rango de aÃ±os disponibles (3 aÃ±os atrÃ¡s + actual)
  */
 export function generarAnios(): number[] {
   const actual = new Date().getFullYear()
   return [actual, actual - 1, actual - 2]
 }
+
+
+export const MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
