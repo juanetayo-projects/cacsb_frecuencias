@@ -8,6 +8,8 @@ import { DetallePage }       from './pages/emssanar/DetallePage'
 import { VentasPage }        from './pages/emssanar/VentasPage'
 import { ResumenFacturaPage } from './pages/emssanar/ResumenFacturaPage'
 
+// Páginas Asmet Salud
+import { AsmetPage }         from './pages/asmet/AsmetPage'
 // Páginas SURA
 import { SuraEventoPage }    from './pages/sura/SuraEventoPage'
 // Páginas Nueva EPS
