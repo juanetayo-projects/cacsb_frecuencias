@@ -4,10 +4,7 @@ import { DashboardLayout } from './components/layout/DashboardLayout'
 
 // PÃ¡ginas del dashboard
 import { HomePage }    from './pages/Home'
-import { ResumenPage } from './pages/emssanar/alta/subsidiado/Resumen'
-import { DetallePage } from './pages/emssanar/alta/subsidiado/Detalle'
-import { VentasPage }  from './pages/emssanar/alta/subsidiado/Ventas'
-
+import { ResumenPage } from './pages/emssanar/ResumenPage'
 // PÃ¡ginas del sistema
 import { UsuariosPage }      from './pages/sistema/Usuarios'
 import { CronjobPage }       from './pages/sistema/Cronjob'
@@ -62,4 +59,5 @@ export default function App() {
     </BrowserRouter>
   )
 }
+
 
