@@ -15,7 +15,7 @@ on:
         required: false
         default: 'all'
         type: choice
-        options: ['all', 'emssanar', 'sura', 'nuevaeps', 'asmetsalud', 'dispensario']
+        options: ['all', 'redgesencro', 'emssanar', 'sura', 'nuevaeps', 'asmetsalud', 'dispensario']
 
 jobs:
   etl-emssanar:

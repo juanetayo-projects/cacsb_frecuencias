@@ -8,6 +8,8 @@ import { DetallePage }       from './pages/emssanar/DetallePage'
 import { VentasPage }        from './pages/emssanar/VentasPage'
 import { ResumenFacturaPage } from './pages/emssanar/ResumenFacturaPage'
 
+// Páginas SURA
+import { SuraEventoPage }    from './pages/sura/SuraEventoPage'
 // Páginas otras aseguradoras
 import { DispensarioPage }   from './pages/dispensario/Dispensario'
 
@@ -50,8 +52,8 @@ export default function App() {
           <Route path="emssanar/evento/contributivo" element={<DetallePage aseguradora="emssanar-alta-cont" />} />
 
           {/* ── SURA ─────────────────────────────────────────────── */}
-          <Route path="sura/evento/subsidiado"   element={<ResumenPage aseguradora="emssanar-alta-sub"  />} />
-          <Route path="sura/evento/contributivo" element={<ResumenPage aseguradora="emssanar-alta-cont" />} />
+          <Route path="sura/evento/subsidiado"   element={<SuraEventoPage tipo="subsidiado"   />} />
+          <Route path="sura/evento/contributivo" element={<SuraEventoPage tipo="contributivo" />} />
 
           {/* ── Nueva EPS ────────────────────────────────────────── */}
           <Route path="nueva-eps/egreso" element={<ResumenPage aseguradora="emssanar-alta-sub" />} />
