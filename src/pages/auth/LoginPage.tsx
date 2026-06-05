@@ -58,13 +58,14 @@ export function LoginPage() {
 
         {/* Logo y título */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl shadow-lg">
-              <img src={`${BASE}/images/logo_cacsb_blanc.png`} alt="CACSB" className="h-16 w-16 object-contain"/>
+          <div className="flex justify-center mb-5">
+            <div className="bg-white/10 backdrop-blur-sm p-5 rounded-2xl shadow-lg">
+              <img src={`${BASE}/images/logo_cacsb_blanc.png`} alt="CACSB" className="h-24 w-24 object-contain filter brightness-0 invert"/>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1">Control de Contratos</h1>
-          <p className="text-blue-200 text-sm">Clínica Santa Bárbara — CACSB</p>
+          <h1 className="text-3xl font-extrabold text-white mb-1 tracking-wide">FRECUENCIAS DE USO</h1>
+          <p className="text-blue-100 text-base font-medium">Control de Contratos</p>
+          <p className="text-blue-300 text-xs mt-1">Clínica Santa Bárbara — CACSB</p>
         </div>
 
         {/* Card de login */}
