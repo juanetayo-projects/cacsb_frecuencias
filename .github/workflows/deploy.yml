@@ -37,6 +37,16 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
+      # Verificar que el build genero los archivos correctos
+      - name: Verify build output
+        run: |
+          echo "=== dist/ contents ==="
+          ls -la dist/
+          echo "=== dist/assets/ ==="
+          ls dist/assets/ 2>/dev/null || echo "no assets folder"
+          echo "=== first 5 lines of dist/index.html ==="
+          head -5 dist/index.html
+
       # GitHub Pages necesita un .nojekyll para rutas SPA
       - name: Add .nojekyll
         run: touch dist/.nojekyll
