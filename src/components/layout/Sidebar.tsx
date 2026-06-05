@@ -1,7 +1,10 @@
-﻿import { NavLink, useLocation } from "react-router-dom"
+﻿import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { Building2, Stethoscope, Heart, Pill, FlaskConical, Users, Clock, FileText, Settings, ChevronDown, ChevronRight } from "lucide-react"
+import { Building2, Stethoscope, Heart, Pill, FlaskConical, Users, Clock, FileText, Settings, ChevronDown, ChevronRight, LogOut } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/hooks/useAuth"
+import { toast } from "sonner"
 
 const BASE = "/cacsb_frecuencias"
 
@@ -47,9 +50,17 @@ const systemItems = [
 ]
 
 export function Sidebar() {
-  const location = useLocation()
+  const location  = useLocation()
+  const navigate  = useNavigate()
+  const { user }  = useAuth()
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const toggle = (key: string) => setExpanded(p => ({ ...p, [key]: !p[key] }))
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    toast.success('Sesión cerrada')
+    navigate('/login')
+  }
 
   return (
     <aside className="sidebar-header w-64 min-h-screen flex flex-col text-white shadow-xl flex-shrink-0">
@@ -75,7 +86,21 @@ export function Sidebar() {
           ))}
         </div>
       </nav>
-      <div className="p-3 border-t border-white/10 text-xs text-blue-300">v1.0.0 CACSB 2026</div>
+      {/* Usuario + logout */}
+      <div className="p-3 border-t border-white/10">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-white truncate">{user?.email}</p>
+            <p className="text-xs text-blue-300">v1.0.0 · CACSB 2026</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            title="Cerrar sesión"
+            className="p-2 text-blue-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0 ml-2">
+            <LogOut className="h-4 w-4"/>
+          </button>
+        </div>
+      </div>
     </aside>
   )
 }
