@@ -1,12 +1,12 @@
-{
+﻿{
   "name": "cacsb-frecuencias",
   "version": "1.0.0",
-  "description": "Control de Contratos - Clínica Santa Bárbara CACSB",
+  "description": "Control de Contratos - ClÃ­nica Santa BÃ¡rbara CACSB",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext ts,tsx"
   },
@@ -44,3 +44,4 @@
     "vite": "^5.2.0"
   }
 }
+

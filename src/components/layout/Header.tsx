@@ -1,7 +1,4 @@
-'use client'
-
-import Image from 'next/image'
-import { Bell, LogOut, User, Download } from 'lucide-react'
+﻿import { Bell, LogOut, User, Download } from 'lucide-react'
 
 interface HeaderProps {
   titulo: string
@@ -20,7 +17,7 @@ export function Header({
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm px-6 py-3">
       <div className="flex items-center justify-between">
-        {/* Título de la sección */}
+        {/* TÃ­tulo de la secciÃ³n */}
         <div className="flex items-center gap-4">
           <Image src="/images/logo_cacsb2.png" alt="CACSB" width={36} height={36} className="rounded" />
           <div>
@@ -29,10 +26,10 @@ export function Header({
           </div>
         </div>
 
-        {/* Fecha de ejecución ETL */}
+        {/* Fecha de ejecuciÃ³n ETL */}
         {fechaEjecucion && (
           <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-            <span className="text-gray-500 text-xs font-medium">ÚLTIMA EJECUCIÓN ETL</span>
+            <span className="text-gray-500 text-xs font-medium">ÃšLTIMA EJECUCIÃ“N ETL</span>
             <span className="font-semibold text-cacsb-700">{fechaEjecucion}</span>
             {horaEjecucion && <span className="text-gray-600">{horaEjecucion}</span>}
           </div>
@@ -60,7 +57,7 @@ export function Header({
             <button onClick={onEnviarEmail}
               title="Enviar por email"
               className="btn-cacsb flex items-center gap-1.5 text-xs">
-              📧 Email
+              ðŸ“§ Email
             </button>
           )}
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -74,3 +71,4 @@ export function Header({
     </header>
   )
 }
+
