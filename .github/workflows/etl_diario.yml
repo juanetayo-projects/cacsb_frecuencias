@@ -1,130 +1,126 @@
-name: "ETL Diario: Azure SQL to Supabase"
+﻿name: "ETL Diario: Azure SQL to Supabase"
 
 on:
+  # Un solo cron â€” medianoche Colombia (05:00 UTC)
   schedule:
-    # 00:00 AM Colombia = 05:00 UTC
-    - cron: '0 5 * * *'   # Emssanar  00:00 COL
-    - cron: '0 6 * * *'   # SURA      01:00 COL
-    - cron: '0 7 * * *'   # Nueva EPS 02:00 COL
-    - cron: '0 8 * * *'   # Asmet     03:00 COL
-    - cron: '0 9 * * *'   # Dispensario 04:00 COL
-  workflow_dispatch:      # Permite ejecución manual desde GitHub
+    - cron: '0 5 * * *'
+  # Ejecucion manual con seleccion de runner
+  workflow_dispatch:
     inputs:
       runner:
         description: 'Runner a ejecutar'
         required: false
         default: 'all'
         type: choice
-        options: ['all', 'redgesencro', 'emssanar', 'sura', 'nuevaeps', 'asmetsalud', 'dispensario']
+        options: ['all','emssanar','sura','nuevaeps','asmetsalud','dispensario']
+
+# Variables de entorno comunes para todos los jobs
+env:
+  MSSQL_HOST:      ${{ secrets.MSSQL_HOST }}
+  MSSQL_DB:        ${{ secrets.MSSQL_DB }}
+  MSSQL_USER:      ${{ secrets.MSSQL_USER }}
+  MSSQL_PASS:      ${{ secrets.MSSQL_PASS }}
+  PG_HOST:         ${{ secrets.PG_HOST }}
+  PG_DB:           ${{ secrets.PG_DB }}
+  PG_USER:         ${{ secrets.PG_USER }}
+  PG_PASS:         ${{ secrets.PG_PASS }}
+  PG_PORT:         '5432'
+  ETL_MESES_ATRAS: '3'
+  ETL_BATCH_SIZE:  '500'
+  ETL_TIMEZONE:    'America/Bogota'
+  ETL_LOG_LEVEL:   '1'
 
 jobs:
   etl-emssanar:
+    name: "ETL 1/5 â€” Emssanar"
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 5 * * *' || github.event.inputs.runner == 'all' || github.event.inputs.runner == 'emssanar'
+    if: >
+      github.event_name == 'schedule' ||
+      github.event.inputs.runner == 'all' ||
+      github.event.inputs.runner == 'emssanar'
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: pdo, pdo_sqlsrv, pdo_pgsql, sqlsrv
-      - name: Run ETL Emssanar
-        env:
-          MSSQL_HOST: ${{ secrets.MSSQL_HOST }}
-          MSSQL_DB:   ${{ secrets.MSSQL_DB }}
-          MSSQL_USER: ${{ secrets.MSSQL_USER }}
-          MSSQL_PASS: ${{ secrets.MSSQL_PASS }}
-          PG_HOST:    ${{ secrets.PG_HOST }}
-          PG_DB:      ${{ secrets.PG_DB }}
-          PG_USER:    ${{ secrets.PG_USER }}
-          PG_PASS:    ${{ secrets.PG_PASS }}
-          PG_PORT:    '5432'
-          ETL_MESES_ATRAS: '3'
-          ETL_BATCH_SIZE:  '500'
-          ETL_TIMEZONE:    'America/Bogota'
-          ETL_LOG_LEVEL:   '1'
-        run: php etl/runners/emssanar.php
+          extensions: pdo, pdo_pgsql, pgsql, sqlsrv, pdo_sqlsrv
+      - name: Run ETL Emssanar (Azure SQL -> Supabase)
+        working-directory: etl
+        run: php runners/emssanar.php
 
   etl-sura:
+    name: "ETL 2/5 â€” SURA"
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 6 * * *' || github.event.inputs.runner == 'all' || github.event.inputs.runner == 'sura'
     needs: etl-emssanar
+    if: >
+      always() &&
+      (github.event_name == 'schedule' ||
+       github.event.inputs.runner == 'all' ||
+       github.event.inputs.runner == 'sura')
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: { php-version: '8.3', extensions: pdo pdo_sqlsrv pdo_pgsql sqlsrv }
+        with:
+          php-version: '8.3'
+          extensions: pdo, pdo_pgsql, pgsql, sqlsrv, pdo_sqlsrv
       - name: Run ETL SURA
-        env:
-          MSSQL_HOST: ${{ secrets.MSSQL_HOST }}
-          MSSQL_DB:   ${{ secrets.MSSQL_DB }}
-          MSSQL_USER: ${{ secrets.MSSQL_USER }}
-          MSSQL_PASS: ${{ secrets.MSSQL_PASS }}
-          PG_HOST:    ${{ secrets.PG_HOST }}
-          PG_DB:      ${{ secrets.PG_DB }}
-          PG_USER:    ${{ secrets.PG_USER }}
-          PG_PASS:    ${{ secrets.PG_PASS }}
-          PG_PORT:    '5432'
-          ETL_MESES_ATRAS: '3'
-          ETL_BATCH_SIZE:  '500'
-          ETL_TIMEZONE:    'America/Bogota'
-          ETL_LOG_LEVEL:   '1'
-        run: php etl/runners/sura.php
+        working-directory: etl
+        run: php runners/sura.php
 
-  etl-otros:
+  etl-nuevaeps:
+    name: "ETL 3/5 â€” Nueva EPS"
     runs-on: ubuntu-latest
-    if: github.event.inputs.runner == 'all' || github.event.inputs.runner == 'nuevaeps' || github.event.inputs.runner == 'asmetsalud' || github.event.inputs.runner == 'dispensario'
     needs: etl-sura
+    if: >
+      always() &&
+      (github.event_name == 'schedule' ||
+       github.event.inputs.runner == 'all' ||
+       github.event.inputs.runner == 'nuevaeps')
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: { php-version: '8.3', extensions: pdo pdo_sqlsrv pdo_pgsql sqlsrv }
+        with:
+          php-version: '8.3'
+          extensions: pdo, pdo_pgsql, pgsql, sqlsrv, pdo_sqlsrv
       - name: Run ETL Nueva EPS
-        if: github.event.inputs.runner == 'all' || github.event.inputs.runner == 'nuevaeps'
-        env:
-          MSSQL_HOST: ${{ secrets.MSSQL_HOST }}
-          MSSQL_DB:   ${{ secrets.MSSQL_DB }}
-          MSSQL_USER: ${{ secrets.MSSQL_USER }}
-          MSSQL_PASS: ${{ secrets.MSSQL_PASS }}
-          PG_HOST: ${{ secrets.PG_HOST }}
-          PG_DB:   ${{ secrets.PG_DB }}
-          PG_USER: ${{ secrets.PG_USER }}
-          PG_PASS: ${{ secrets.PG_PASS }}
-          PG_PORT: '5432'
-          ETL_MESES_ATRAS: '3'
-          ETL_BATCH_SIZE: '500'
-          ETL_TIMEZONE: 'America/Bogota'
-          ETL_LOG_LEVEL: '1'
-        run: php etl/runners/nuevaeps.php
+        working-directory: etl
+        run: php runners/nuevaeps.php
+
+  etl-asmetsalud:
+    name: "ETL 4/5 â€” Asmet Salud"
+    runs-on: ubuntu-latest
+    needs: etl-nuevaeps
+    if: >
+      always() &&
+      (github.event_name == 'schedule' ||
+       github.event.inputs.runner == 'all' ||
+       github.event.inputs.runner == 'asmetsalud')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo, pdo_pgsql, pgsql, sqlsrv, pdo_sqlsrv
       - name: Run ETL Asmet Salud
-        if: github.event.inputs.runner == 'all' || github.event.inputs.runner == 'asmetsalud'
-        env:
-          MSSQL_HOST: ${{ secrets.MSSQL_HOST }}
-          MSSQL_DB: ${{ secrets.MSSQL_DB }}
-          MSSQL_USER: ${{ secrets.MSSQL_USER }}
-          MSSQL_PASS: ${{ secrets.MSSQL_PASS }}
-          PG_HOST: ${{ secrets.PG_HOST }}
-          PG_DB: ${{ secrets.PG_DB }}
-          PG_USER: ${{ secrets.PG_USER }}
-          PG_PASS: ${{ secrets.PG_PASS }}
-          PG_PORT: '5432'
-          ETL_MESES_ATRAS: '3'
-          ETL_BATCH_SIZE: '500'
-          ETL_TIMEZONE: 'America/Bogota'
-          ETL_LOG_LEVEL: '1'
-        run: php etl/runners/asmetsalud.php
+        working-directory: etl
+        run: php runners/asmetsalud.php
+
+  etl-dispensario:
+    name: "ETL 5/5 â€” Dispensario"
+    runs-on: ubuntu-latest
+    needs: etl-asmetsalud
+    if: >
+      always() &&
+      (github.event_name == 'schedule' ||
+       github.event.inputs.runner == 'all' ||
+       github.event.inputs.runner == 'dispensario')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo, pdo_pgsql, pgsql, sqlsrv, pdo_sqlsrv
       - name: Run ETL Dispensario
-        if: github.event.inputs.runner == 'all' || github.event.inputs.runner == 'dispensario'
-        env:
-          MSSQL_HOST: ${{ secrets.MSSQL_HOST }}
-          MSSQL_DB: ${{ secrets.MSSQL_DB }}
-          MSSQL_USER: ${{ secrets.MSSQL_USER }}
-          MSSQL_PASS: ${{ secrets.MSSQL_PASS }}
-          PG_HOST: ${{ secrets.PG_HOST }}
-          PG_DB: ${{ secrets.PG_DB }}
-          PG_USER: ${{ secrets.PG_USER }}
-          PG_PASS: ${{ secrets.PG_PASS }}
-          PG_PORT: '5432'
-          ETL_MESES_ATRAS: '3'
-          ETL_BATCH_SIZE: '500'
-          ETL_TIMEZONE: 'America/Bogota'
-          ETL_LOG_LEVEL: '1'
-        run: php etl/runners/dispensario.php
+        working-directory: etl
+        run: php runners/dispensario.php
+
