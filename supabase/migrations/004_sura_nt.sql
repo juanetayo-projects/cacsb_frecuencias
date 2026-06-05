@@ -22,6 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_sura_nt_cup       ON sura_nt(cup);
 CREATE INDEX IF NOT EXISTS idx_sura_nt_agrupador ON sura_nt(agrupador);
 
 ALTER TABLE sura_nt ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "sura_nt_auth" ON sura_nt;
 CREATE POLICY "sura_nt_auth" ON sura_nt FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 COMMENT ON TABLE sura_nt IS 'Normativa SURA sincronizada desde redgesencro_control — cme_ajustado por CUP';
