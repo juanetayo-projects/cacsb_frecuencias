@@ -19,7 +19,7 @@ export function Header({
       <div className="flex items-center justify-between">
         {/* TÃ­tulo de la secciÃ³n */}
         <div className="flex items-center gap-4">
-          <Image src="/images/logo_cacsb2.png" alt="CACSB" width={36} height={36} className="rounded" />
+          <img src="/cacsb_frecuencias/images/logo_cacsb2.png" alt="CACSB" className="h-9 w-9 rounded object-contain" />
           <div>
             <h1 className="text-lg font-bold text-cacsb-700">{titulo}</h1>
             {subtitulo && <p className="text-xs text-gray-500">{subtitulo}</p>}

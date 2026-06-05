@@ -56,8 +56,8 @@ export function DispensarioPage() {
   const totalValor     = filtrado.reduce((s, r) => s + (r.valor_total || 0), 0)
   const ultimaEjecucion = data[0]?.fecha_reporte
 
-  const handleExcelExport = () => exportarExcel(filtrado, 'Dispensario Médico', 'dispensario_medico')
-  const handlePdfExport   = () => exportarPDF(filtrado, 'Dispensario Médico — CACSB', 'dispensario_medico')
+  const handleExcelExport = () => exportarExcel(filtrado as any[], 'Dispensario Médico', 'dispensario_medico')
+  const handlePdfExport   = () => exportarPDF(filtrado as any[], 'Dispensario Médico — CACSB', 'dispensario_medico')
 
   return (
     <div className="p-6 space-y-5">
