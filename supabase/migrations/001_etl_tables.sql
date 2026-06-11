@@ -69,19 +69,19 @@ CREATE TABLE IF NOT EXISTS emssanar_internaciones_alta_sub (
 
 CREATE TABLE IF NOT EXISTS emssanar_ventas_alta_cont (
     id              SERIAL PRIMARY KEY,
-    "Facturada"     INTEGER DEFAULT 0,
-    "Pendiente"     INTEGER DEFAULT 0,
-    "Eliminada"     INTEGER DEFAULT 0,
-    "EstadoCuenta"  INTEGER DEFAULT 0,
+    facturada       INTEGER DEFAULT 0,
+    pendiente       INTEGER DEFAULT 0,
+    eliminada       INTEGER DEFAULT 0,
+    estado_cuenta   INTEGER DEFAULT 0,
     mes             VARCHAR(20)
 );
 
 CREATE TABLE IF NOT EXISTS emssanar_ventas_alta_sub (
     id              SERIAL PRIMARY KEY,
-    "Facturada"     INTEGER DEFAULT 0,
-    "Pendiente"     INTEGER DEFAULT 0,
-    "Eliminada"     INTEGER DEFAULT 0,
-    "EstadoCuenta"  INTEGER DEFAULT 0,
+    facturada       INTEGER DEFAULT 0,
+    pendiente       INTEGER DEFAULT 0,
+    eliminada       INTEGER DEFAULT 0,
+    estado_cuenta   INTEGER DEFAULT 0,
     mes             VARCHAR(20)
 );
 
@@ -171,19 +171,19 @@ CREATE TABLE IF NOT EXISTS emssanar_internaciones_media_sub (
 
 CREATE TABLE IF NOT EXISTS emssanar_ventas_media_cont (
     id              SERIAL PRIMARY KEY,
-    "Facturada"     INTEGER DEFAULT 0,
-    "Pendiente"     INTEGER DEFAULT 0,
-    "Eliminada"     INTEGER DEFAULT 0,
-    "EstadoCuenta"  INTEGER DEFAULT 0,
+    facturada       INTEGER DEFAULT 0,
+    pendiente       INTEGER DEFAULT 0,
+    eliminada       INTEGER DEFAULT 0,
+    estado_cuenta   INTEGER DEFAULT 0,
     mes             VARCHAR(20)
 );
 
 CREATE TABLE IF NOT EXISTS emssanar_ventas_media_sub (
     id              SERIAL PRIMARY KEY,
-    "Facturada"     INTEGER DEFAULT 0,
-    "Pendiente"     INTEGER DEFAULT 0,
-    "Eliminada"     INTEGER DEFAULT 0,
-    "EstadoCuenta"  INTEGER DEFAULT 0,
+    facturada       INTEGER DEFAULT 0,
+    pendiente       INTEGER DEFAULT 0,
+    eliminada       INTEGER DEFAULT 0,
+    estado_cuenta   INTEGER DEFAULT 0,
     mes             VARCHAR(20)
 );
 
@@ -278,15 +278,15 @@ CREATE TABLE IF NOT EXISTS sura_frecuencias (
     mes             SMALLINT,
     activo          INTEGER DEFAULT 0,
     valor           NUMERIC(18,2),
-    "fechaReporte"  DATE,
-    "horaReporte"   TIME
+    fecha_reporte   DATE,
+    hora_reporte    TIME
 );
 
 CREATE TABLE IF NOT EXISTS sura_internaciones (
     id              SERIAL PRIMARY KEY,
     ingreso         VARCHAR(50),
-    "fechaIngreso"  DATE,
-    "fechaEgreso"   DATE,
+    fecha_ingreso   DATE,
+    fecha_egreso    DATE,
     aseguradora     VARCHAR(50),
     contrato        VARCHAR(100),
     plan            VARCHAR(100),
@@ -298,10 +298,10 @@ CREATE TABLE IF NOT EXISTS sura_internaciones (
 
 CREATE TABLE IF NOT EXISTS sura_ventas (
     id              SERIAL PRIMARY KEY,
-    "Facturada"     INTEGER DEFAULT 0,
-    "Pendiente"     INTEGER DEFAULT 0,
-    "Eliminada"     INTEGER DEFAULT 0,
-    "EstadoCuenta"  INTEGER DEFAULT 0,
+    facturada       INTEGER DEFAULT 0,
+    pendiente       INTEGER DEFAULT 0,
+    eliminada       INTEGER DEFAULT 0,
+    estado_cuenta   INTEGER DEFAULT 0,
     mes             VARCHAR(20)
 );
 
@@ -369,16 +369,16 @@ CREATE TABLE IF NOT EXISTS sura_cups_principal (
     principal       VARCHAR(5),
     year            SMALLINT,
     mes             SMALLINT,
-    "fechaReporte"  DATE,
-    "horaReporte"   TIME
+    fecha_reporte   DATE,
+    hora_reporte    TIME
 );
 
 CREATE TABLE IF NOT EXISTS sura_inter_sinprioridad (
     id              SERIAL PRIMARY KEY,
     ingreso         VARCHAR(50),
-    "fechaIngreso"  DATE,
+    fecha_ingreso   DATE,
     cantidad        INTEGER,
-    "fechaEgreso"   DATE,
+    fecha_egreso    DATE,
     aseguradora     VARCHAR(50),
     contrato        VARCHAR(100),
     plan            VARCHAR(100),

@@ -31,7 +31,7 @@ etlLog("Rango de fechas: $fechaInicio → $fechaFin", 'INFO', RUNNER);
 
 try {
     $mssql = conectarMSSQL();
-    $mysql = conectarMySQL();
+    $pg    = conectarSupabase();
 } catch (PDOException $e) {
     etlLog("ERROR CRÍTICO de conexión: " . $e->getMessage(), 'ERROR', RUNNER);
     exit(1);
@@ -44,7 +44,11 @@ $errores = 0;
 // Usa ROW_NUMBER para traer 1 registro por ingreso (la tarifa más alta)
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Frecuencias por egreso (contrato 231)", 'INFO', RUNNER);
+$cfgEgreso        = cargarParamUnico($pg, RUNNER, 'frecuencias_egreso');
+$contratoEgreso   = $cfgEgreso['contrato'];
+$priceListEgreso  = $cfgEgreso['billPriceList'];
+
+etlLog("── {$cfgEgreso['label']} (contrato $contratoEgreso)", 'INFO', RUNNER);
 
 $queryEgreso = "
     WITH BaseData AS (
@@ -78,7 +82,7 @@ $queryEgreso = "
         INNER JOIN BillStateOfAccountProductDetails bsoahd
             ON bsoah.idStateOfAccountHeader = bsoahd.idStateOfAccountHeader
             AND bsoahd.idUserCompany = 108240
-            AND bsoahd.idContract   = 231
+            AND bsoahd.idContract   = $contratoEgreso
         INNER JOIN billSales             bs    ON bsoahd.idSale         = bs.idSale
             AND bs.state <> 'E'
         INNER JOIN billSaleDetails       bsd   ON bsoahd.idSaleDetail   = bsd.idSaleDetail
@@ -95,7 +99,7 @@ $queryEgreso = "
         INNER JOIN billPriceListProducts bplp  ON p.idProduct          = bplp.idProduct
         INNER JOIN billPriceListDates    bpld  ON bplp.idBillPriceListDate = bpld.idBillPriceListDate
         INNER JOIN billPriceLists        bpl   ON bpld.idbillPriceList  = bpl.idbillPriceList
-            AND bpl.idbillPriceList = 409
+            AND bpl.idbillPriceList = $priceListEgreso
         OUTER APPLY (
             SELECT TOP 1 pacd.alternateCode
             FROM productAlternateCodeDetails pacd
@@ -118,7 +122,7 @@ $sqlInsert1 = "INSERT INTO neps_frecuencias
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryEgreso, 'neps_frecuencias', $sqlInsert1,
+    etlTransferir($mssql, $pg, $queryEgreso, 'neps_frecuencias', $sqlInsert1,
         fn($row) => [
             $row['Ingreso'],               $row['FechaIngreso'],
             $row['FechaEgreso'],           $row['NoIdentificacionPaciente'],
@@ -138,7 +142,11 @@ try {
 // BLOQUE 2: FRECUENCIAS POR VENTA (neps_frecuencias_venta)
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Frecuencias por venta (contrato 231)", 'INFO', RUNNER);
+$cfgVenta       = cargarParamUnico($pg, RUNNER, 'frecuencias_venta');
+$contratoVenta  = $cfgVenta['contrato'];
+$priceListVenta = $cfgVenta['billPriceList'];
+
+etlLog("── {$cfgVenta['label']} (contrato $contratoVenta)", 'INFO', RUNNER);
 
 $queryVenta = "
     WITH BaseData AS (
@@ -176,11 +184,11 @@ $queryVenta = "
             ON bplp.idBillPriceListDate = bpld.idBillPriceListDate
         INNER JOIN billPriceLists        bpl  WITH (NOLOCK)
             ON bpld.idbillPriceList = bpl.idbillPriceList
-            AND bpl.idbillPriceList = 409
+            AND bpl.idbillPriceList = $priceListVenta
         WHERE
             bs.saleDate      >= '$fechaInicio'
             AND bs.saleDate  <= '$fechaFin 23:59:59'
-            AND bs.idContract = 231
+            AND bs.idContract = $contratoVenta
             AND bs.idUserCompany = 108240
             AND bs.state     <> 'E'
     )
@@ -199,7 +207,7 @@ $sqlInsert2 = "INSERT INTO neps_frecuencias_venta
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryVenta, 'neps_frecuencias_venta', $sqlInsert2,
+    etlTransferir($mssql, $pg, $queryVenta, 'neps_frecuencias_venta', $sqlInsert2,
         fn($row) => [
             $row['Ingreso'],               $row['FechaVenta'],
             $row['NoIdentificacionPaciente'], $row['Municipio'],

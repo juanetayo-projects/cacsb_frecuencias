@@ -31,7 +31,7 @@ etlLog("Rango de fechas: $fechaInicio → $fechaFin", 'INFO', RUNNER);
 
 try {
     $mssql = conectarMSSQL();
-    $mysql = conectarMySQL();
+    $pg    = conectarSupabase();
 } catch (PDOException $e) {
     etlLog("ERROR CRÍTICO de conexión: " . $e->getMessage(), 'ERROR', RUNNER);
     exit(1);
@@ -43,7 +43,11 @@ $errores = 0;
 // BLOQUE 1: FRECUENCIAS
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Frecuencias (contrato 59, planes 659,660)", 'INFO', RUNNER);
+$cfgFrecuencias = cargarParamUnico($pg, RUNNER, 'frecuencias');
+$contratoFrec   = $cfgFrecuencias['contrato'];
+$planesFrec     = sqlIntList($cfgFrecuencias['planesIncluidos']);
+
+etlLog("── {$cfgFrecuencias['label']} (contrato $contratoFrec, planes $planesFrec)", 'INFO', RUNNER);
 
 $queryFrecuencias = "
     SELECT
@@ -68,11 +72,11 @@ $queryFrecuencias = "
     INNER JOIN users                u     ON u.idUser             = e.idUserPatient
     INNER JOIN userPeople           up    ON u.idUser             = up.idUser
     WHERE
-        c.idContract        = 59
+        c.idContract        = $contratoFrec
         AND p.idProductType IN (3, 4)
         AND bs.state        <> 'E'
         AND e.idUserCompany  = 108240
-        AND cp.idPlan        IN (659, 660)
+        AND cp.idPlan        IN $planesFrec
         AND e.idStatus       IN (2, 4)
         AND bsoh.status      IN ('AC','FC','FP')
         AND bs.saleDate      >= '$fechaInicio'
@@ -85,7 +89,7 @@ $sqlInsert1 = "INSERT INTO asmet_salud_frecuencias
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryFrecuencias, 'asmet_salud_frecuencias', $sqlInsert1,
+    etlTransferir($mssql, $pg, $queryFrecuencias, 'asmet_salud_frecuencias', $sqlInsert1,
         fn($row) => [
             $row['Ingreso'],      $row['NoIdentificacion'], $row['Cup'],
             $row['Plan'],         $row['Producto'],          $row['Cantidad'],
@@ -101,7 +105,11 @@ try {
 // BLOQUE 2: RESUMEN POR FACTURA
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Resumen x Factura (contrato 59, planes 659,660)", 'INFO', RUNNER);
+$cfgResumen   = cargarParamUnico($pg, RUNNER, 'resumen_factura');
+$contratoRes  = $cfgResumen['contrato'];
+$planesRes    = sqlIntList($cfgResumen['planesIncluidos']);
+
+etlLog("── {$cfgResumen['label']} (contrato $contratoRes, planes $planesRes)", 'INFO', RUNNER);
 
 $queryResumen = "
     SELECT
@@ -126,9 +134,9 @@ $queryResumen = "
         bs.state             <> 'E'
         AND bi.idUserCompany  = 108240
         AND bi.invoiceState   = 'A'
-        AND bi.idContract     = 59
+        AND bi.idContract     = $contratoRes
         AND pt.idProductType  IN (3, 4)
-        AND cp.idPlan         IN (659, 660)
+        AND cp.idPlan         IN $planesRes
         AND bi.dateBegin      >= '$fechaInicio'
         AND bi.dateBegin      <= '$fechaFin 23:59:59'
     GROUP BY
@@ -143,7 +151,7 @@ $sqlInsert2 = "INSERT INTO asmet_salud_resumen_factura
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryResumen, 'asmet_salud_resumen_factura', $sqlInsert2,
+    etlTransferir($mssql, $pg, $queryResumen, 'asmet_salud_resumen_factura', $sqlInsert2,
         fn($row) => [
             $row['Ingreso'],       $row['Cup'],             $row['Plan'],
             $row['NumeroFactura'], $row['MesAnioVenta'],    $row['TotalCantidad'],

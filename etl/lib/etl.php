@@ -87,6 +87,99 @@ function etlTransferir(
 }
 
 /**
+ * Carga la configuración de un bloque (runner + bloque) desde report_params.
+ * Devuelve un array de filas con las claves: variante, label, tabla, contrato,
+ * y opcionalmente legalCodes (cadena "('cod1','cod2',...)") cuando el bloque
+ * tiene asociada una categoría de cat_cups.
+ */
+function cargarConfigBloque(PDO $pg, string $runner, string $bloque): array
+{
+    $stmt = $pg->prepare(
+        "SELECT variante, label, tabla_destino, id_contrato, legal_codes_categoria
+         FROM report_params
+         WHERE runner = ? AND bloque = ? AND activo = TRUE
+         ORDER BY orden"
+    );
+    $stmt->execute([$runner, $bloque]);
+
+    $filas = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $cfg = [
+            'variante' => $row['variante'],
+            'label'    => $row['label'],
+            'tabla'    => $row['tabla_destino'],
+            'contrato' => (int)$row['id_contrato'],
+        ];
+        if (!empty($row['legal_codes_categoria'])) {
+            $cfg['legalCodes'] = cargarLegalCodes($pg, $row['legal_codes_categoria']);
+        }
+        $filas[] = $cfg;
+    }
+    return $filas;
+}
+
+/**
+ * Carga la fila única de configuración de un bloque (runner + bloque + variante)
+ * desde report_params. Para bloques sin variantes (variante='default').
+ */
+function cargarParamUnico(PDO $pg, string $runner, string $bloque, string $variante = 'default'): array
+{
+    $stmt = $pg->prepare(
+        "SELECT * FROM report_params
+         WHERE runner = ? AND bloque = ? AND variante = ? AND activo = TRUE"
+    );
+    $stmt->execute([$runner, $bloque, $variante]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+        throw new RuntimeException("report_params no encontrado: $runner/$bloque/$variante");
+    }
+
+    $cfg = [
+        'tabla'           => $row['tabla_destino'],
+        'label'           => $row['label'],
+        'contrato'        => $row['id_contrato']     !== null ? (int)$row['id_contrato']     : null,
+        'billPriceList'   => $row['bill_price_list'] !== null ? (int)$row['bill_price_list'] : null,
+        'contratos'       => pgArrayInt($row['id_contratos']),
+        'planesExcluidos' => pgArrayInt($row['id_planes_excluidos']),
+        'planesIncluidos' => pgArrayInt($row['id_planes_incluidos']),
+        'productTypes'    => pgArrayInt($row['id_product_types']),
+    ];
+    if (!empty($row['legal_codes_categoria'])) {
+        $cfg['legalCodes'] = cargarLegalCodes($pg, $row['legal_codes_categoria']);
+    }
+    return $cfg;
+}
+
+/**
+ * Convierte un array de Postgres ("{1,2,3}") en array PHP de enteros
+ */
+function pgArrayInt(?string $valor): array
+{
+    if ($valor === null || $valor === '{}') return [];
+    return array_map('intval', explode(',', trim($valor, '{}')));
+}
+
+/**
+ * Convierte un array PHP de enteros en lista SQL "(1,2,3)"
+ */
+function sqlIntList(array $valores): string
+{
+    return '(' . implode(',', array_map('intval', $valores)) . ')';
+}
+
+/**
+ * Devuelve los CUPS de una categoría de cat_cups como cadena SQL "('a','b',...)"
+ */
+function cargarLegalCodes(PDO $pg, string $categoria): string
+{
+    $stmt = $pg->prepare("SELECT cup FROM cat_cups WHERE categoria = ? ORDER BY id");
+    $stmt->execute([$categoria]);
+    $cups = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $quoted = array_map(fn($c) => "'" . str_replace("'", "''", $c) . "'", $cups);
+    return '(' . implode(',', $quoted) . ')';
+}
+
+/**
  * Registra el inicio de una ejecución en log_cronjob de Supabase
  */
 function logInicioEjecucion(PDO $pg, string $runner): int

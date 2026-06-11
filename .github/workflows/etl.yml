@@ -1,0 +1,59 @@
+name: "ETL bi_frecuencias (GoMedisys → Supabase)"
+
+on:
+  schedule:
+    # 4:13 am Colombia (UTC-5) = 9:13 UTC. Minuto "impar" para evitar la cola
+    # de crons que se disparan en punto.
+    - cron: "13 9 * * *"
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "Ejecutar un solo runner (vacío = todos)"
+        required: false
+        default: ""
+        type: choice
+        options:
+          - ""
+          - emssanar
+          - sura
+          - asmetsalud
+          - dispensario
+          - nuevaeps
+
+jobs:
+  etl:
+    name: ETL ${{ matrix.runner }}
+    if: ${{ github.event.inputs.runner == '' || github.event.inputs.runner == matrix.runner }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # Máximo 2 runners simultáneos: dan velocidad sin saturar el SQL Server
+      # de GoMedisys (origen único compartido por los 5 runners).
+      max-parallel: 2
+      matrix:
+        runner: [emssanar, sura, asmetsalud, dispensario, nuevaeps]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_sqlsrv, pdo_pgsql
+          ini-values: memory_limit=256M, max_execution_time=0
+
+      - name: Run ETL ${{ matrix.runner }}
+        env:
+          MSSQL_HOST: ${{ secrets.MSSQL_HOST }}
+          MSSQL_DB:   ${{ secrets.MSSQL_DB }}
+          MSSQL_USER: ${{ secrets.MSSQL_USER }}
+          MSSQL_PASS: ${{ secrets.MSSQL_PASS }}
+          PG_HOST:    ${{ secrets.PG_HOST }}
+          PG_DB:      ${{ secrets.PG_DB }}
+          PG_USER:    ${{ secrets.PG_USER }}
+          PG_PASS:    ${{ secrets.PG_PASS }}
+          PG_PORT:    ${{ secrets.PG_PORT }}
+          ETL_MESES_ATRAS: ${{ vars.ETL_MESES_ATRAS || '3' }}
+        run: php etl/runners/${{ matrix.runner }}.php

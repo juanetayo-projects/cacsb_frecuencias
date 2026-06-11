@@ -32,7 +32,7 @@ etlLog("Rango de fechas: $fechaInicio → $fechaFin", 'INFO', RUNNER);
 
 try {
     $mssql = conectarMSSQL();
-    $mysql = conectarMySQL();
+    $pg    = conectarSupabase();
 } catch (PDOException $e) {
     etlLog("ERROR CRÍTICO de conexión: " . $e->getMessage(), 'ERROR', RUNNER);
     exit(1);
@@ -44,7 +44,10 @@ try {
 // con un único query y streaming, eliminando el loop do-while.
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Dispensario médico (contrato 198)", 'INFO', RUNNER);
+$cfg      = cargarParamUnico($pg, RUNNER, 'frecuencias');
+$contrato = $cfg['contrato'];
+
+etlLog("── {$cfg['label']} (contrato $contrato)", 'INFO', RUNNER);
 
 $query = "
     SELECT
@@ -76,7 +79,7 @@ $query = "
         bs.saleDate  >= '$fechaInicio'
         AND bs.saleDate <= '$fechaFin 23:59:59'
         AND bs.state  <> 'E'
-        AND c.idContract = 198
+        AND c.idContract = $contrato
     ORDER BY e.identifier
     OPTION (RECOMPILE)
 ";
@@ -88,7 +91,7 @@ $sqlInsert = "INSERT INTO dispensario_medico_frecuencias
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    $insertados = etlTransferir($mssql, $mysql, $query, 'dispensario_medico_frecuencias', $sqlInsert,
+    $insertados = etlTransferir($mssql, $pg, $query, 'dispensario_medico_frecuencias', $sqlInsert,
         fn($row) => [
             $row['Ingreso'],       $row['FechaIngreso'],  $row['FechaEgreso'],
             $row['NumeroVenta'],   $row['EstadoVenta'],   $row['Cup'],

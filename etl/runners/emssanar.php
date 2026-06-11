@@ -35,7 +35,7 @@ etlLog("Rango de fechas: $fechaInicio → $fechaFin (ETL_MESES_ATRAS=" . ETL_MES
 // ── Conexiones ────────────────────────────────────────────────────────────
 try {
     $mssql = conectarMSSQL();
-    $mysql = conectarMySQL();
+    $pg    = conectarSupabase();
 } catch (PDOException $e) {
     etlLog("ERROR CRÍTICO de conexión: " . $e->getMessage(), 'ERROR', RUNNER);
     exit(1);
@@ -54,12 +54,7 @@ $errores      = 0;
  * Definición de los 4 contratos de frecuencias.
  * Solo difieren en idContract y tabla destino.
  */
-$configFrecuencias = [
-    ['contrato' => 205, 'tabla' => 'emssanar_frecuencias_alta_cont',  'label' => 'Alta Contributivo'],
-    ['contrato' => 203, 'tabla' => 'emssanar_frecuencias_media_cont', 'label' => 'Mediana Contributivo'],
-    ['contrato' => 206, 'tabla' => 'emssanar_frecuencias_alta_sub',   'label' => 'Alta Subsidiado'],
-    ['contrato' => 204, 'tabla' => 'emssanar_frecuencias_media_sub',  'label' => 'Mediana Subsidiado'],
-];
+$configFrecuencias = cargarConfigBloque($pg, RUNNER, 'frecuencias');
 
 foreach ($configFrecuencias as $cfg) {
     $idContrato = $cfg['contrato'];
@@ -111,13 +106,13 @@ foreach ($configFrecuencias as $cfg) {
         OPTION (RECOMPILE)
     ";
 
-    $sqlInsert = "INSERT INTO `$tabla`
+    $sqlInsert = "INSERT INTO \"$tabla\"
         (ingreso, fecha_ingreso, fecha_egreso, venta, estado, cup, cantidad,
          descripcion, tipo_producto, valor_unitario, year, mes, fecha_reporte, hora_reporte)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     try {
-        etlTransferir($mssql, $mysql, $query, $tabla, $sqlInsert,
+        etlTransferir($mssql, $pg, $query, $tabla, $sqlInsert,
             fn($row) => [
                 $row['Ingreso'],      $row['FechaIngreso'],  $row['FechaEgreso'],
                 $row['NumeroVenta'],  $row['EstadoVenta'],   $row['Cups'],
@@ -139,32 +134,7 @@ foreach ($configFrecuencias as $cfg) {
 // NOTA: Los legalCode difieren entre "alta" (amp) y "mediana" (reducido)
 // ═══════════════════════════════════════════════════════════════════════════
 
-$configInternaciones = [
-    [
-        'contrato'   => 205,
-        'tabla'      => 'emssanar_internaciones_alta_cont',
-        'label'      => 'Alta Contributivo',
-        'legalCodes' => "('110A01','107M01','10A002','10A001','10A004','124P01','890611')",
-    ],
-    [
-        'contrato'   => 203,
-        'tabla'      => 'emssanar_internaciones_media_cont',
-        'label'      => 'Mediana Contributivo',
-        'legalCodes' => "('110A01','129A02','129A01','132P01')",
-    ],
-    [
-        'contrato'   => 206,
-        'tabla'      => 'emssanar_internaciones_alta_sub',
-        'label'      => 'Alta Subsidiado',
-        'legalCodes' => "('110A01','107M01','10A002','10A001','10A004','124P01','890611')",
-    ],
-    [
-        'contrato'   => 204,
-        'tabla'      => 'emssanar_internaciones_media_sub',
-        'label'      => 'Mediana Subsidiado',
-        'legalCodes' => "('110A01','129A02','129A01','132P01')",
-    ],
-];
+$configInternaciones = cargarConfigBloque($pg, RUNNER, 'internaciones');
 
 foreach ($configInternaciones as $cfg) {
     $idContrato = $cfg['contrato'];
@@ -205,12 +175,12 @@ foreach ($configInternaciones as $cfg) {
         OPTION (RECOMPILE)
     ";
 
-    $sqlInsert = "INSERT INTO `$tabla`
+    $sqlInsert = "INSERT INTO \"$tabla\"
         (ingreso, fecha_ingreso, fecha_egreso, documento, cup, cantidad, mes, year)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     try {
-        etlTransferir($mssql, $mysql, $query, $tabla, $sqlInsert,
+        etlTransferir($mssql, $pg, $query, $tabla, $sqlInsert,
             fn($row) => [
                 $row['Ingreso'],        $row['FechaIngreso'],
                 $row['FechaEgreso'],    $row['DocumentoPaciente'],
@@ -229,12 +199,7 @@ foreach ($configInternaciones as $cfg) {
 // Tablas: emssanar_ventas_alta_cont | media_cont | alta_sub | media_sub
 // ═══════════════════════════════════════════════════════════════════════════
 
-$configVentas = [
-    ['contrato' => 205, 'tabla' => 'emssanar_ventas_alta_cont',  'label' => 'Alta Contributivo'],
-    ['contrato' => 203, 'tabla' => 'emssanar_ventas_media_cont', 'label' => 'Mediana Contributivo'],
-    ['contrato' => 206, 'tabla' => 'emssanar_ventas_alta_sub',   'label' => 'Alta Subsidiado'],
-    ['contrato' => 204, 'tabla' => 'emssanar_ventas_media_sub',  'label' => 'Mediana Subsidiado'],
-];
+$configVentas = cargarConfigBloque($pg, RUNNER, 'ventas');
 
 foreach ($configVentas as $cfg) {
     $idContrato = $cfg['contrato'];
@@ -273,12 +238,12 @@ foreach ($configVentas as $cfg) {
         OPTION (RECOMPILE)
     ";
 
-    $sqlInsert = "INSERT INTO `$tabla`
-        (Facturada, Pendiente, Eliminada, EstadoCuenta, mes)
+    $sqlInsert = "INSERT INTO \"$tabla\"
+        (facturada, pendiente, eliminada, estado_cuenta, mes)
         VALUES (?, ?, ?, ?, ?)";
 
     try {
-        etlTransferir($mssql, $mysql, $query, $tabla, $sqlInsert,
+        etlTransferir($mssql, $pg, $query, $tabla, $sqlInsert,
             fn($row) => [
                 $row['Facturada'], $row['Pendiente'],
                 $row['Eliminada'], $row['EstadoCuenta'], $row['Mes'],
@@ -295,12 +260,7 @@ foreach ($configVentas as $cfg) {
 // Tablas: emssanar_resumen_alta_cont | media_cont | alta_sub | media_sub
 // ═══════════════════════════════════════════════════════════════════════════
 
-$configResumen = [
-    ['contrato' => 205, 'tabla' => 'emssanar_resumen_alta_cont',  'label' => 'Alta Contributivo'],
-    ['contrato' => 203, 'tabla' => 'emssanar_resumen_media_cont', 'label' => 'Mediana Contributivo'],
-    ['contrato' => 206, 'tabla' => 'emssanar_resumen_alta_sub',   'label' => 'Alta Subsidiado'],
-    ['contrato' => 204, 'tabla' => 'emssanar_resumen_media_sub',  'label' => 'Mediana Subsidiado'],
-];
+$configResumen = cargarConfigBloque($pg, RUNNER, 'resumen');
 
 foreach ($configResumen as $cfg) {
     $idContrato = $cfg['contrato'];
@@ -337,13 +297,13 @@ foreach ($configResumen as $cfg) {
         OPTION (RECOMPILE)
     ";
 
-    $sqlInsert = "INSERT INTO `$tabla`
+    $sqlInsert = "INSERT INTO \"$tabla\"
         (ingreso, numero_factura, mes_anio_venta, total_cantidad, valor_total,
          mes_anio_factura, fecha_reporte)
         VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     try {
-        etlTransferir($mssql, $mysql, $query, $tabla, $sqlInsert,
+        etlTransferir($mssql, $pg, $query, $tabla, $sqlInsert,
             fn($row) => [
                 $row['Ingreso'],       $row['NumeroFactura'],  $row['MesAnioVenta'],
                 $row['TotalCantidad'], $row['ValorTotal'],     $row['MesAnioFactura'],
@@ -361,10 +321,7 @@ foreach ($configResumen as $cfg) {
 // Tablas: emssanar_frecuencias_evento_cont | evento_sub
 // ═══════════════════════════════════════════════════════════════════════════
 
-$configEvento = [
-    ['contrato' => 45, 'tabla' => 'emssanar_frecuencias_evento_cont', 'label' => 'Evento Contributivo'],
-    ['contrato' => 41, 'tabla' => 'emssanar_frecuencias_evento_sub',  'label' => 'Evento Subsidiado'],
-];
+$configEvento = cargarConfigBloque($pg, RUNNER, 'evento');
 
 foreach ($configEvento as $cfg) {
     $idContrato = $cfg['contrato'];
@@ -432,14 +389,14 @@ foreach ($configEvento as $cfg) {
         OPTION (RECOMPILE)
     ";
 
-    $sqlInsert = "INSERT INTO `$tabla`
+    $sqlInsert = "INSERT INTO \"$tabla\"
         (ingreso, municipio, ultima_ubicacion, estado_ingreso, contrato,
          numero_venta, estado, tipo_producto, producto, cup,
          cantidad, valor_unitario, year, mes, fecha_reporte, hora_reporte)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     try {
-        etlTransferir($mssql, $mysql, $query, $tabla, $sqlInsert,
+        etlTransferir($mssql, $pg, $query, $tabla, $sqlInsert,
             fn($row) => [
                 $row['Ingreso'],      $row['Municipio'],       $row['UltimaUbicacion'],
                 $row['EstadoIngreso'],$row['Contrato'],        $row['NumeroVenta'],

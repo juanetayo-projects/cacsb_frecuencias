@@ -37,7 +37,7 @@ etlLog("Rango de fechas: $fechaInicio → $fechaFin (ETL_MESES_ATRAS=" . ETL_MES
 // ── Conexiones ────────────────────────────────────────────────────────────
 try {
     $mssql = conectarMSSQL();
-    $mysql = conectarMySQL();
+    $pg    = conectarSupabase();
 } catch (PDOException $e) {
     etlLog("ERROR CRÍTICO de conexión: " . $e->getMessage(), 'ERROR', RUNNER);
     exit(1);
@@ -51,10 +51,7 @@ $errores      = 0;
 // BLOQUE 1: EVENTO (2 contratos: contributivo 39 / subsidiado 66)
 // ═══════════════════════════════════════════════════════════════════════════
 
-$configEvento = [
-    ['contrato' => 39, 'tabla' => 'sura_evento_cont', 'label' => 'Evento Contributivo'],
-    ['contrato' => 66, 'tabla' => 'sura_evento_sub',  'label' => 'Evento Subsidiado'],
-];
+$configEvento = cargarConfigBloque($pg, RUNNER, 'evento');
 
 foreach ($configEvento as $cfg) {
     $idContrato = $cfg['contrato'];
@@ -102,13 +99,13 @@ foreach ($configEvento as $cfg) {
         OPTION (RECOMPILE)
     ";
 
-    $sqlInsert = "INSERT INTO `$tabla`
+    $sqlInsert = "INSERT INTO \"$tabla\"
         (ingreso, ultima_ubicacion, producto, tipo_producto, cup,
          cantidad, valor_unitario, mes_anio_factura, fecha_reporte)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     try {
-        etlTransferir($mssql, $mysql, $query, $tabla, $sqlInsert,
+        etlTransferir($mssql, $pg, $query, $tabla, $sqlInsert,
             fn($row) => [
                 $row['Ingreso'],       $row['UltimaUbicacion'], $row['Producto'],
                 $row['TipoProducto'],  $row['Cup'],             $row['Cantidad'],
@@ -126,7 +123,11 @@ foreach ($configEvento as $cfg) {
 // BLOQUE 2: FRECUENCIAS (contratos 63 y 172, excl. planes 443,360,317,116)
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Frecuencias (contratos 63,172)", 'INFO', RUNNER);
+$cfgFrecuencias = cargarParamUnico($pg, RUNNER, 'frecuencias');
+$contratosFrec  = sqlIntList($cfgFrecuencias['contratos']);
+$exclPlanesFrec = sqlIntList($cfgFrecuencias['planesExcluidos']);
+
+etlLog("── {$cfgFrecuencias['label']} (contratos {$contratosFrec})", 'INFO', RUNNER);
 
 $queryFrecuencias = "
     SELECT
@@ -189,8 +190,8 @@ $queryFrecuencias = "
         ORDER BY EHR.idRecord DESC
     ) AS LOC_HIST
     WHERE
-        BSOAPD.idContract IN (63, 172)
-        AND BSOAPD.idPlan  NOT IN (443, 360, 317, 116)
+        BSOAPD.idContract IN $contratosFrec
+        AND BSOAPD.idPlan  NOT IN $exclPlanesFrec
         AND PT.idProductType IN (3, 4)
         AND BS.state <> 'E'
         AND INGRESO.dateDischarge >= '$fechaInicio'
@@ -202,11 +203,11 @@ $sqlInsertFrecuencias = "INSERT INTO sura_frecuencias
     (ingreso, fecha_ingreso, fecha_egreso, documento, nombres, apellidos,
      aseguradora, contrato, plan, venta, fecha_venta, responsable_venta,
      estado, ubicacion, cup, cantidad, descripcion, tipo_producto,
-     rips, year, mes, activo, valor, fechaReporte, horaReporte)
+     rips, year, mes, activo, valor, fecha_reporte, hora_reporte)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryFrecuencias, 'sura_frecuencias', $sqlInsertFrecuencias,
+    etlTransferir($mssql, $pg, $queryFrecuencias, 'sura_frecuencias', $sqlInsertFrecuencias,
         fn($row) => [
             $row['INGRESO'],                     $row['FECHA DE INGRESO'],
             $row['FECHA DE EGRESO'],             $row['DOCUMENTO DEL PACIENTE'],
@@ -232,7 +233,11 @@ try {
 // BLOQUE 3: INTERNACIONES (contrato 172)
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Internaciones (contrato 172)", 'INFO', RUNNER);
+$cfgInternaciones = cargarParamUnico($pg, RUNNER, 'internaciones');
+$contratoInter    = $cfgInternaciones['contrato'];
+$legalCodesInter  = $cfgInternaciones['legalCodes'];
+
+etlLog("── {$cfgInternaciones['label']} (contrato $contratoInter)", 'INFO', RUNNER);
 
 $queryInternaciones = "
     SELECT
@@ -254,7 +259,7 @@ $queryInternaciones = "
                  ON BSOAH2.idStateOfAccountHeader = BSOAPD2.idStateOfAccountHeader
              INNER JOIN products P2 ON BSOAPD2.idProduct = P2.idProduct
              WHERE BSOAPD2.idSale = bs.idSale
-               AND P2.legalCode IN ('110A01','107M01','10A001','10A002','10A004','124P01')
+               AND P2.legalCode IN $legalCodesInter
              ORDER BY BSOAPD2.idSaleDetail),
             bsapd.legalCode
         )                                                                       AS CUPS,
@@ -266,7 +271,7 @@ $queryInternaciones = "
     INNER JOIN users            PACIENTE   ON INGRESO.idUserPatient = PACIENTE.idUser
     INNER JOIN contracts        AS CONT    ON bs.idContract       = CONT.idContract
     INNER JOIN contractPlans    AS PLANES  ON bs.idPlan = PLANES.idPlan
-        AND CONT.idContract = CONT.idContract
+        AND CONT.idContract = PLANES.idContract
     INNER JOIN billSaleDetails  AS bsd     ON bs.idSale = bsd.idSale
     INNER JOIN BillStateOfAccountProductDetails AS bsapd
         ON bsd.idSaleDetail = bsapd.idSaleDetail
@@ -277,20 +282,20 @@ $queryInternaciones = "
     INNER JOIN products P ON bsapd.idProduct = P.idProduct
     WHERE
         INGRESO.idUserCompany   <> 1
-        AND bsac.idContract      = 172
+        AND bsac.idContract      = $contratoInter
         AND INGRESO.idEncounter  = bsah.idEncounter
-        AND P.legalCode          IN ('110A01','107M01','10A002','10A001','10A004','124P01')
+        AND P.legalCode          IN $legalCodesInter
         AND INGRESO.dateDischarge >= '$fechaInicio'
         AND INGRESO.dateDischarge <= '$fechaFin 23:59:59'
     OPTION (RECOMPILE)
 ";
 
 $sqlInsertInter = "INSERT INTO sura_internaciones
-    (ingreso, fechaIngreso, fechaEgreso, aseguradora, contrato, plan, documento, cup, mes, year)
+    (ingreso, fecha_ingreso, fecha_egreso, aseguradora, contrato, plan, documento, cup, mes, year)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryInternaciones, 'sura_internaciones', $sqlInsertInter,
+    etlTransferir($mssql, $pg, $queryInternaciones, 'sura_internaciones', $sqlInsertInter,
         fn($row) => [
             $row['INGRESO'],     $row['FECHA DE INGRESO'], $row['FECHA DE EGRESO'],
             $row['ASEGURADORA'], $row['CONTRATO'],          $row['PLAN'],
@@ -307,7 +312,11 @@ try {
 // BLOQUE 4: VENTAS — Resumen por mes (contratos 63, 172, excl. planes)
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Ventas (contratos 63,172)", 'INFO', RUNNER);
+$cfgVentas      = cargarParamUnico($pg, RUNNER, 'ventas');
+$contratosVent  = sqlIntList($cfgVentas['contratos']);
+$exclPlanesVent = sqlIntList($cfgVentas['planesExcluidos']);
+
+etlLog("── {$cfgVentas['label']} (contratos {$contratosVent})", 'INFO', RUNNER);
 
 $queryVentas = "
     SELECT
@@ -341,8 +350,8 @@ $queryVentas = "
                      AND bsd.idSaleDetail IN (
                          SELECT bsapdf.idSaleDetail
                          FROM BillStateOfAccountProductDetails bsapdf
-                         WHERE bsapdf.idContract IN (63,172)
-                           AND bsapdf.idPlan NOT IN (443,360,317,116)
+                         WHERE bsapdf.idContract IN $contratosVent
+                           AND bsapdf.idPlan NOT IN $exclPlanesVent
                      )                                                   THEN 'EstadoCuenta'
             END AS EstadoVenta
         FROM billSales bs
@@ -353,8 +362,8 @@ $queryVentas = "
         INNER JOIN productTypes   pt  ON p.idProductType = pt.idProductType
         WHERE
             p.idProductType IN (3, 4)
-            AND bs.idContract IN (63, 172)
-            AND bs.idPlan NOT IN (443, 360, 317, 116)
+            AND bs.idContract IN $contratosVent
+            AND bs.idPlan NOT IN $exclPlanesVent
             AND e.dateDischarge >= '$fechaInicio'
             AND e.dateDischarge <= '$fechaFin 23:59:59'
     ) AS base
@@ -365,11 +374,11 @@ $queryVentas = "
     OPTION (RECOMPILE)
 ";
 
-$sqlInsertVentas = "INSERT INTO sura_ventas (Facturada, Pendiente, Eliminada, EstadoCuenta, mes)
+$sqlInsertVentas = "INSERT INTO sura_ventas (facturada, pendiente, eliminada, estado_cuenta, mes)
     VALUES (?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryVentas, 'sura_ventas', $sqlInsertVentas,
+    etlTransferir($mssql, $pg, $queryVentas, 'sura_ventas', $sqlInsertVentas,
         fn($row) => [
             $row['Facturada'] ?? 0, $row['Pendiente'] ?? 0,
             $row['Eliminada'] ?? 0, $row['EstadoCuenta'] ?? 0,
@@ -385,7 +394,10 @@ try {
 // BLOQUE 5: PGP — Ejecución (contrato 218)
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── PGP Ejecución (contrato 218)", 'INFO', RUNNER);
+$cfgPgp     = cargarParamUnico($pg, RUNNER, 'pgp_ejecucion');
+$contratoPgp = $cfgPgp['contrato'];
+
+etlLog("── {$cfgPgp['label']} (contrato $contratoPgp)", 'INFO', RUNNER);
 
 $queryPgp = "
     SELECT
@@ -412,7 +424,7 @@ $queryPgp = "
     INNER JOIN billSaleDetails      bsd   ON bsoapd.idSaleDetail  = bsd.idSaleDetail
     WHERE
         bs.state    <> 'E'
-        AND c.idContract = 218
+        AND c.idContract = $contratoPgp
         AND e.idUserCompany = 108240
         AND e.idStatus = 4
         AND e.dateDischarge >= '$fechaInicio'
@@ -425,7 +437,7 @@ $sqlInsertPgp = "INSERT INTO sura_pgp_ejecucion
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryPgp, 'sura_pgp_ejecucion', $sqlInsertPgp,
+    etlTransferir($mssql, $pg, $queryPgp, 'sura_pgp_ejecucion', $sqlInsertPgp,
         fn($row) => [
             $row['Ingreso'],      $row['NoIdentificacion'], $row['Cup'],
             $row['Plan'],         $row['Cantidad'],          $row['ValorUnitario'],
@@ -442,7 +454,12 @@ try {
 // BLOQUE 6: CUP PRINCIPAL (contratos 63,172, solo productType=3)
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Cup Principal (contratos 63,172)", 'INFO', RUNNER);
+$cfgCupPrincipal     = cargarParamUnico($pg, RUNNER, 'cups_principal');
+$contratosCup        = sqlIntList($cfgCupPrincipal['contratos']);
+$exclPlanesCup       = sqlIntList($cfgCupPrincipal['planesExcluidos']);
+$productTypesCup     = sqlIntList($cfgCupPrincipal['productTypes']);
+
+etlLog("── {$cfgCupPrincipal['label']} (contratos {$contratosCup})", 'INFO', RUNNER);
 
 $queryCupPrincipal = "
     SELECT
@@ -504,10 +521,10 @@ $queryCupPrincipal = "
         ORDER BY EHR.idRecord DESC
     ) AS LOC_HIST
     WHERE
-        PT.idProductType = 3
+        PT.idProductType IN $productTypesCup
         AND BS.state <> 'E'
-        AND BSOAPD.idContract IN (63, 172)
-        AND BSOAPD.idPlan NOT IN (443, 360, 317, 116)
+        AND BSOAPD.idContract IN $contratosCup
+        AND BSOAPD.idPlan NOT IN $exclPlanesCup
         AND INGRESO.dateDischarge >= '$fechaInicio'
         AND INGRESO.dateDischarge <= '$fechaFin 23:59:59'
     OPTION (RECOMPILE)
@@ -517,11 +534,11 @@ $sqlInsertCup = "INSERT INTO sura_cups_principal
     (ingreso, fecha_ingreso, fecha_egreso, documento, nombres, apellidos,
      aseguradora, contrato, plan, venta, fecha_venta, responsable_venta,
      estado, ubicacion, cups, cantidad, descripcion, tipo_producto,
-     principal, year, mes, fechaReporte, horaReporte)
+     principal, year, mes, fecha_reporte, hora_reporte)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryCupPrincipal, 'sura_cups_principal', $sqlInsertCup,
+    etlTransferir($mssql, $pg, $queryCupPrincipal, 'sura_cups_principal', $sqlInsertCup,
         fn($row) => [
             $row['INGRESO'],                     $row['FECHA DE INGRESO'],
             $row['FECHA DE EGRESO'],             $row['DOCUMENTO DEL PACIENTE'],
@@ -546,7 +563,11 @@ try {
 // BLOQUE 7: INTERNACIONES SIN PRIORIDAD (contrato 172)
 // ═══════════════════════════════════════════════════════════════════════════
 
-etlLog("── Internaciones sin prioridad (contrato 172)", 'INFO', RUNNER);
+$cfgInterSinP       = cargarParamUnico($pg, RUNNER, 'inter_sinprioridad');
+$contratoInterSinP  = $cfgInterSinP['contrato'];
+$legalCodesInterSinP = $cfgInterSinP['legalCodes'];
+
+etlLog("── {$cfgInterSinP['label']} (contrato $contratoInterSinP)", 'INFO', RUNNER);
 
 $queryInterSinP = "
     SELECT
@@ -570,7 +591,7 @@ $queryInterSinP = "
     INNER JOIN users          PACIENTE    ON INGRESO.idUserPatient = PACIENTE.idUser
     INNER JOIN contracts      AS CONT     ON bs.idContract    = CONT.idContract
     INNER JOIN contractPlans  AS PLANES   ON bs.idPlan = PLANES.idPlan
-        AND CONT.idContract = CONT.idContract
+        AND CONT.idContract = PLANES.idContract
     INNER JOIN billSaleDetails AS bsd     ON bs.idSale        = bsd.idSale
     INNER JOIN BillStateOfAccountProductDetails AS bsapd
         ON bsd.idSaleDetail = bsapd.idSaleDetail
@@ -581,20 +602,20 @@ $queryInterSinP = "
     INNER JOIN products P ON bsapd.idProduct = P.idProduct
     WHERE
         INGRESO.idUserCompany   <> 1
-        AND bsac.idContract      = 172
+        AND bsac.idContract      = $contratoInterSinP
         AND INGRESO.idEncounter  = bsah.idEncounter
-        AND P.legalCode          IN ('110A01','107M01','10A002','10A001','10A004','124P01')
+        AND P.legalCode          IN $legalCodesInterSinP
         AND INGRESO.dateDischarge >= '$fechaInicio'
         AND INGRESO.dateDischarge <= '$fechaFin 23:59:59'
     OPTION (RECOMPILE)
 ";
 
 $sqlInsertInterSinP = "INSERT INTO sura_inter_sinprioridad
-    (ingreso, fechaIngreso, cantidad, fechaEgreso, aseguradora, contrato, plan, documento, cup, mes, year)
+    (ingreso, fecha_ingreso, cantidad, fecha_egreso, aseguradora, contrato, plan, documento, cup, mes, year)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 try {
-    etlTransferir($mssql, $mysql, $queryInterSinP, 'sura_inter_sinprioridad', $sqlInsertInterSinP,
+    etlTransferir($mssql, $pg, $queryInterSinP, 'sura_inter_sinprioridad', $sqlInsertInterSinP,
         fn($row) => [
             $row['INGRESO'],      $row['FECHA DE INGRESO'], $row['Cantidad'],
             $row['FECHA DE EGRESO'], $row['ASEGURADORA'],   $row['CONTRATO'],
