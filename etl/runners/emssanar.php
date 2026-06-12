@@ -334,7 +334,7 @@ foreach ($configEvento as $cfg) {
         SELECT
             e.identifier                                                        AS Ingreso,
             gpd.name                                                            AS Municipio,
-            loc.name                                                            AS UltimaUbicacion,
+            UBIC.name                                                           AS UltimaUbicacion,
             CASE
                 WHEN e.idStatus = 1 THEN 'Planeado'
                 WHEN e.idStatus = 2 THEN 'Activo'
@@ -372,13 +372,12 @@ foreach ($configEvento as $cfg) {
         INNER JOIN userPeople   up   ON u.idUser          = up.idUser
         INNER JOIN generalPoliticalDivisions gpd
             ON up.idHomePlacePoliticalDivision = gpd.idPoliticalDivision
-        OUTER APPLY (
-            SELECT TOP 1 pc.name
+        LEFT JOIN (
+            SELECT er.idEncounter, pc.name,
+                   ROW_NUMBER() OVER (PARTITION BY er.idEncounter ORDER BY er.idEncounter DESC) AS rn
             FROM encounterRecords er
             INNER JOIN physicalLocations pc ON pc.idPhysicalLocation = er.idActualLocation
-            WHERE er.idEncounter = e.idEncounter
-            ORDER BY er.idEncounter DESC
-        ) AS loc
+        ) UBIC ON UBIC.idEncounter = e.idEncounter AND UBIC.rn = 1
         WHERE
             bs.state            <> 'E'
             AND bi.idUserCompany = 108240
