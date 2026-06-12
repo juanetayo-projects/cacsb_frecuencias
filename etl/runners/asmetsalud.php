@@ -54,7 +54,7 @@ $queryFrecuencias = "
         e.identifier                                                            AS Ingreso,
         u.documentNumber                                                        AS NoIdentificacion,
         LEFT(p.legalCode, 6)                                                   AS Cup,
-        cp.name                                                                 AS Plan,
+        cp.name                                                                 AS [Plan],
         p.name                                                                  AS Producto,
         CAST(bsoapd.quantityBill AS INT)                                        AS Cantidad,
         FORMAT(bs.saleDate, 'MM/yyyy')                                         AS MesAnioVenta
@@ -115,7 +115,7 @@ $queryResumen = "
     SELECT
         e.identifier                                                            AS Ingreso,
         p.legalCode                                                             AS Cup,
-        cp.name                                                                 AS Plan,
+        cp.name                                                                 AS [Plan],
         CONCAT_WS('-', RTRIM(bi.invoicePrefix), bi.invoiceNumber)              AS NumeroFactura,
         FORMAT(bs.saleDate,   'MM/yyyy')                                       AS MesAnioVenta,
         SUM(CAST(bid.quantity AS INT))                                          AS TotalCantidad,

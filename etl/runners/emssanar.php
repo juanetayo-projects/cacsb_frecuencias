@@ -151,9 +151,9 @@ foreach ($configInternaciones as $cfg) {
             CAST(e.dateDischarge  AS DATE)                                      AS FechaEgreso,
             up.documentNumber                                                   AS DocumentoPaciente,
             p.legalCode                                                         AS Cups,
-            IIF(bsd.quantityStateOfAccount > 0,
+            CAST(IIF(bsd.quantityStateOfAccount > 0,
                 bsd.quantityStateOfAccount,
-                (bsd.quantity - bsd.quantityReturned))                          AS Cantidad,
+                (bsd.quantity - bsd.quantityReturned)) AS INT)                  AS Cantidad,
             MONTH(bs.saleDate)                                                  AS Mes,
             YEAR(bs.saleDate)                                                   AS [Year]
         FROM billSales AS bs
@@ -351,7 +351,7 @@ foreach ($configEvento as $cfg) {
                 ELSE bs.state
             END                                                                 AS Estado,
             pt.name                                                             AS TipoProducto,
-            p.name                                                              AS Producto,
+            LEFT(p.name, 200)                                                   AS Producto,
             IIF(p.legalCode IN ('00P0000511','00P0000512'),
                 LEFT(p.legalCode, 8),
                 LEFT(p.legalCode, 6))                                          AS Cup,

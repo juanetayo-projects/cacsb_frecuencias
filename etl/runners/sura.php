@@ -146,7 +146,7 @@ $queryFrecuencias = "
             ELSE CONT.name
         END                                                                     AS ASEGURADORA,
         CONT.name                                                               AS CONTRATO,
-        PLANES.name                                                             AS PLAN,
+        PLANES.name                                                             AS [PLAN],
         BS.saleNumber                                                           AS [NUMERO DE VENTA],
         CONVERT(VARCHAR, BS.saleDate, 23)                                      AS [FECHA DE LA VENTA],
         CONCAT(U.givenName, ' ', U.familyName)                                 AS [RESPONSABLE DE LA VENTA],
@@ -249,7 +249,7 @@ $queryInternaciones = "
             ELSE CONT.name
         END                                                                     AS ASEGURADORA,
         CONT.name                                                               AS CONTRATO,
-        PLANES.name                                                             AS PLAN,
+        PLANES.name                                                             AS [PLAN],
         PACIENTE.documentNumber                                                 AS DOCUMENTO,
         -- Cup principal: busca el primer código de internación conocido del ingreso
         COALESCE(
@@ -404,7 +404,7 @@ $queryPgp = "
         e.identifier                                                            AS Ingreso,
         u.documentNumber                                                        AS NoIdentificacion,
         LEFT(p.legalCode, 6)                                                   AS Cup,
-        cp.name                                                                 AS Plan,
+        cp.name                                                                 AS [Plan],
         CAST((bsd.quantity - bsd.quantityReturned) AS INT)                    AS Cantidad,
         bsd.value                                                               AS ValorUnitario,
         (CAST((bsd.quantity - bsd.quantityReturned) AS INT) * bsd.value)       AS ValorTotal,
@@ -474,7 +474,7 @@ $queryCupPrincipal = "
             ELSE CONT.name
         END                                                                     AS ASEGURADORA,
         CONT.name                                                               AS CONTRATO,
-        PLANES.name                                                             AS PLAN,
+        PLANES.name                                                             AS [PLAN],
         BS.saleNumber                                                           AS [NUMERO DE VENTA],
         CONVERT(VARCHAR, BS.saleDate, 23)                                      AS [FECHA DE LA VENTA],
         CONCAT(U.givenName, ' ', U.familyName)                                 AS [RESPONSABLE DE LA VENTA],
@@ -579,7 +579,7 @@ $queryInterSinP = "
             ELSE CONT.name
         END                                                                     AS ASEGURADORA,
         CONT.name                                                               AS CONTRATO,
-        PLANES.name                                                             AS PLAN,
+        PLANES.name                                                             AS [PLAN],
         CONVERT(INT, FLOOR(bsapd.quantityBill))                                AS Cantidad,
         PACIENTE.documentNumber                                                 AS DOCUMENTO,
         P.legalCode                                                             AS CUPS,
