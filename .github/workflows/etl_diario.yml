@@ -10,7 +10,7 @@ on:
         required: false
         default: 'all'
         type: choice
-        options: ['all','emssanar','sura','nuevaeps','asmetsalud','dispensario']
+        options: ['all','emssanar','sura','nuevaeps','asmetsalud','dispensario','diag']
 
 env:
   MSSQL_HOST:      ${{ secrets.MSSQL_HOST }}
@@ -169,3 +169,26 @@ jobs:
       - name: Run ETL Dispensario
         working-directory: etl
         run: php runners/dispensario.php
+
+  diagnostico-indices:
+    name: "Diagnóstico - Índices y volumen GoMedisys"
+    runs-on: ubuntu-latest
+    if: github.event.inputs.runner == 'diag'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Microsoft ODBC Driver 18 for SQL Server
+        run: |
+          if ! dpkg -s msodbcsql18 >/dev/null 2>&1; then
+            sudo rm -f /etc/apt/sources.list.d/mssql-release.list /etc/apt/sources.list.d/microsoft-prod.list
+            curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc > /dev/null
+            echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/$(lsb_release -rs)/prod $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/mssql-release.list
+            sudo apt-get update -qq
+            sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 > /dev/null
+          fi
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo, pdo_pgsql, pgsql, sqlsrv, pdo_sqlsrv
+      - name: Run diagnostico de indices
+        working-directory: etl
+        run: php diagnostico/diag_indices.php
