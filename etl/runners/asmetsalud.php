@@ -55,7 +55,7 @@ $queryFrecuencias = "
         u.documentNumber                                                        AS NoIdentificacion,
         LEFT(p.legalCode, 6)                                                   AS Cup,
         cp.name                                                                 AS [Plan],
-        p.name                                                                  AS Producto,
+        LEFT(p.name, 200)                                                       AS Producto,
         CAST(bsoapd.quantityBill AS INT)                                        AS Cantidad,
         FORMAT(bs.saleDate, 'MM/yyyy')                                         AS MesAnioVenta
     FROM BillStateOfAccountHeader bsoh

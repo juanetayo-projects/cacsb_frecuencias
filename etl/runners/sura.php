@@ -261,7 +261,7 @@ $queryInternaciones = "
              WHERE BSOAPD2.idSale = bs.idSale
                AND P2.legalCode IN $legalCodesInter
              ORDER BY BSOAPD2.idSaleDetail),
-            bsapd.legalCode
+            P.legalCode
         )                                                                       AS CUPS,
         MONTH(INGRESO.dateDischarge)                                            AS MES,
         YEAR(INGRESO.dateDischarge)                                             AS [YEAR]
