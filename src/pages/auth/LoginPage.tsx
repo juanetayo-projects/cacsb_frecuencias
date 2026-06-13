@@ -52,7 +52,7 @@ export function LoginPage() {
         <div className="px-8 pt-8 pb-6 text-center" style={{ background: '#0D2D6B' }}>
           <div className="flex justify-center mb-3">
             <img
-              src={`${BASE}/images/logo_cacsb2.png`}
+              src={`${BASE}/images/logo_cacsb_blanc.png`}
               alt="Clínica Santa Bárbara"
               className="h-16 object-contain"
             />
