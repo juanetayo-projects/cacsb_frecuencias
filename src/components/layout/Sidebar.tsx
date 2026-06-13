@@ -65,8 +65,8 @@ export function Sidebar() {
   return (
     <aside className="sidebar-header w-64 min-h-screen flex flex-col text-white shadow-xl flex-shrink-0">
       <div className="p-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <img src={`${BASE}/images/logo_cacsb_blanc.png`} alt="CACSB" className="w-10 h-10 rounded object-contain" />
+        <div className="flex flex-col items-center text-center gap-2">
+          <img src={`${BASE}/images/logo_cacsb_blanc.png`} alt="CACSB" className="h-12 object-contain" />
           <div>
             <p className="font-bold text-sm leading-tight">Control de Contratos</p>
             <p className="text-xs text-blue-200">Clinica Santa Barbara</p>

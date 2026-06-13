@@ -24,7 +24,7 @@
     @apply bg-white rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_6px_rgba(0,0,0,0.04)] border border-gray-100 transition-all duration-200;
   }
   .card-odoo:hover { @apply shadow-[0_4px_8px_rgba(0,0,0,0.10),0_8px_16px_rgba(0,0,0,0.06)] -translate-y-0.5; }
-  .sidebar-header { background: linear-gradient(135deg, #1a4a7a 0%, #2e6db4 100%); }
+  .sidebar-header { background: linear-gradient(135deg, #0D2D6B 0%, #16468E 100%); }
   .btn-cacsb { @apply bg-[#1a4a7a] hover:bg-[#123560] text-white font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 text-sm; }
   .cumpl-ok    { background-color: #1a4a7a !important; color: white !important; font-weight: 600; }
   .cumpl-alert { background-color: #fde8e8 !important; color: #b02020 !important; font-weight: 600; }
