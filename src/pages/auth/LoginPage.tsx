@@ -43,137 +43,137 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(135deg, #1a4a7a 0%, #2563a8 50%, #1a4a7a 100%)' }}>
+      style={{ background: 'linear-gradient(135deg, #0D2D6B 0%, #16468E 50%, #0D2D6B 100%)' }}>
 
       {/* Card */}
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
 
-        {/* Logo */}
-        <div className="flex justify-center mb-5">
-          <img
-            src={`${BASE}/images/logo_cacsb2.png`}
-            alt="Clínica Santa Bárbara"
-            className="h-20 object-contain"
-          />
+        {/* Encabezado */}
+        <div className="px-8 pt-8 pb-6 text-center" style={{ background: '#0D2D6B' }}>
+          <div className="flex justify-center mb-3">
+            <img
+              src={`${BASE}/images/logo_cacsb2.png`}
+              alt="Clínica Santa Bárbara"
+              className="h-16 object-contain"
+            />
+          </div>
+          <h1 className="text-lg font-bold text-white">
+            Frecuencias de Uso
+          </h1>
+          <p className="text-sm text-blue-100 mt-1">
+            Clínica de Alta Complejidad Santa Bárbara
+          </p>
         </div>
 
-        {resetSent ? (
-          /* ── Confirmación de reset ── */
-          <div className="text-center py-2">
-            <p className="font-semibold text-gray-800 mb-2">Correo enviado</p>
-            <p className="text-sm text-gray-500 mb-4">
-              Revise su bandeja de entrada en <b>{email}</b> y siga el enlace.
-            </p>
-            <button onClick={() => { setModo('login'); setResetSent(false) }}
-              className="text-sm text-[#1a4a7a] hover:underline font-medium">
-              ← Volver al inicio de sesión
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={modo === 'login' ? handleLogin : handleReset} className="space-y-4">
-
-            {/* Título */}
-            <div className="text-center mb-2">
-              <h1 className="text-xl font-bold text-gray-800">
-                {modo === 'login' ? 'FRECUENCIAS DE USO' : 'Recuperar Contraseña'}
-              </h1>
-              <p className="text-sm text-[#2563a8] mt-0.5">
-                Control de Contratos · Supabase
+        <div className="p-8">
+          {resetSent ? (
+            /* ── Confirmación de reset ── */
+            <div className="text-center py-2">
+              <p className="font-semibold text-gray-800 mb-2">Correo enviado</p>
+              <p className="text-sm text-gray-500 mb-4">
+                Revise su bandeja de entrada en <b>{email}</b> y siga el enlace.
               </p>
+              <button onClick={() => { setModo('login'); setResetSent(false) }}
+                className="text-sm text-[#16468E] hover:underline font-medium">
+                ← Volver al inicio de sesión
+              </button>
             </div>
+          ) : (
+            <form onSubmit={modo === 'login' ? handleLogin : handleReset} className="space-y-4">
 
-            {/* Error */}
-            {error && (
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2.5 rounded-lg">
-                <AlertCircle className="h-4 w-4 flex-shrink-0"/>
-                {error}
-              </div>
-            )}
+              {/* Título */}
+              <h2 className="text-xl font-bold text-[#0D2D6B] text-center mb-2">
+                {modo === 'login' ? 'Iniciar Sesión' : 'Recuperar Contraseña'}
+              </h2>
 
-            {/* Campo Usuario */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                {modo === 'login' ? 'Usuario' : 'Correo Electrónico'}
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="correo@cacsantabarbara.co"
-                  autoComplete="email"
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a4a7a]/30 focus:border-[#1a4a7a] transition-colors"
-                />
-              </div>
-            </div>
+              {/* Error */}
+              {error && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2.5 rounded-lg">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0"/>
+                  {error}
+                </div>
+              )}
 
-            {/* Campo Contraseña */}
-            {modo === 'login' && (
+              {/* Campo Usuario */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Contraseña</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Correo electrónico
+                </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
                   <input
-                    type={showPass ? 'text' : 'password'}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1a4a7a]/30 focus:border-[#1a4a7a] transition-colors"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="correo@cacsantabarbara.co"
+                    autoComplete="email"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#16468E]/30 focus:border-[#16468E] transition-colors"
                   />
-                  <button type="button" onClick={() => setShowPass(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    {showPass ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
-                  </button>
                 </div>
               </div>
-            )}
 
-            {/* Botón Ingresar */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-lg text-white font-semibold text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ background: loading ? '#64748b' : '#1a3a6a' }}>
-              {loading ? (
-                <><Loader2 className="h-4 w-4 animate-spin"/> Verificando...</>
-              ) : (
-                <>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-                  </svg>
-                  {modo === 'login' ? 'Ingresar' : 'Enviar enlace'}
-                </>
+              {/* Campo Contraseña */}
+              {modo === 'login' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Contraseña</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
+                    <input
+                      type={showPass ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                      className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#16468E]/30 focus:border-[#16468E] transition-colors"
+                    />
+                    <button type="button" onClick={() => setShowPass(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      {showPass ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
+                    </button>
+                  </div>
+                </div>
               )}
-            </button>
 
-            {/* Enlace recuperar */}
-            {modo === 'login' && (
-              <div className="text-center">
-                <button type="button" onClick={() => { setModo('reset'); setError('') }}
-                  className="text-xs text-gray-400 hover:text-[#1a4a7a] transition-colors">
-                  ¿Olvidó su contraseña?
-                </button>
-              </div>
-            )}
-            {modo === 'reset' && (
-              <div className="text-center">
-                <button type="button" onClick={() => { setModo('login'); setError('') }}
-                  className="text-xs text-[#1a4a7a] hover:underline">
-                  ← Volver al inicio de sesión
-                </button>
-              </div>
-            )}
+              {/* Botón Ingresar */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2.5 rounded-lg text-white font-semibold text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ background: loading ? '#64748b' : '#0D2D6B' }}>
+                {loading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin"/> Verificando...</>
+                ) : (
+                  modo === 'login' ? 'Ingresar' : 'Enviar enlace'
+                )}
+              </button>
 
-          </form>
-        )}
+              {/* Enlace recuperar */}
+              {modo === 'login' && (
+                <div className="text-center">
+                  <button type="button" onClick={() => { setModo('reset'); setError('') }}
+                    className="text-xs text-[#16468E] hover:underline transition-colors">
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+              )}
+              {modo === 'reset' && (
+                <div className="text-center">
+                  <button type="button" onClick={() => { setModo('login'); setError('') }}
+                    className="text-xs text-[#16468E] hover:underline">
+                    ← Volver al inicio de sesión
+                  </button>
+                </div>
+              )}
 
-        {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-          <p className="text-xs text-gray-400">
-            Clínica Santa Bárbara · Acceso restringido
-          </p>
+            </form>
+          )}
+
+          {/* Footer */}
+          <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-400">
+              © {new Date().getFullYear()} Clínica Santa Bárbara — Sistema Interno
+            </p>
+          </div>
         </div>
       </div>
     </div>
