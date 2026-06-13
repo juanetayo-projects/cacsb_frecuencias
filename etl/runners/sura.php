@@ -63,7 +63,7 @@ foreach ($configEvento as $cfg) {
     $query = "
         SELECT
             e.identifier                                                        AS Ingreso,
-            UBIC.name                                                           AS UltimaUbicacion,
+            OUTER_LOC.name                                                      AS UltimaUbicacion,
             p.name                                                              AS Producto,
             pt.name                                                             AS TipoProducto,
             IIF(p.legalCode IN ('00P0000511','00P0000512'),
@@ -82,12 +82,13 @@ foreach ($configEvento as $cfg) {
         INNER JOIN encounters   e    ON bs.idEncounter   = e.idEncounter
         INNER JOIN products     p    ON bid.idProduct    = p.idProduct
         INNER JOIN productTypes pt   ON p.idProductType  = pt.idProductType
-        LEFT JOIN (
-            SELECT er.idEncounter, pc.name,
-                   ROW_NUMBER() OVER (PARTITION BY er.idEncounter ORDER BY er.idEncounter DESC) AS rn
+        OUTER APPLY (
+            SELECT TOP 1 pc.name
             FROM encounterRecords er
             INNER JOIN physicalLocations pc ON pc.idPhysicalLocation = er.idActualLocation
-        ) UBIC ON UBIC.idEncounter = e.idEncounter AND UBIC.rn = 1
+            WHERE er.idEncounter = e.idEncounter
+            ORDER BY er.idEncounter DESC
+        ) AS OUTER_LOC
         WHERE
             bs.state            <> 'E'
             AND bi.idUserCompany = 108240
@@ -154,7 +155,7 @@ $queryFrecuencias = "
             WHEN BS.state = 'E' THEN 'ELIMINADA'
             WHEN BS.state = 'F' THEN 'FACTURADA'
         END                                                                     AS [ESTADO DE VENTA],
-        UBIC.name                                                               AS [ULTIMA UBICACION DEL PACIENTE],
+        LOC_HIST.name                                                           AS [ULTIMA UBICACION DEL PACIENTE],
         LEFT(PROD.legalCode, 6)                                                AS CUPS,
         CAST(BSOAPD.quantityBill AS INT)                                        AS CANTIDAD,
         PROD.name                                                               AS PRODUCTO,
@@ -181,12 +182,13 @@ $queryFrecuencias = "
     INNER JOIN contractPlans PLANES ON BSOAPD.idPlan = PLANES.idPlan
     INNER JOIN users U ON BS.idUserRecord = U.idUser
     INNER JOIN users PACIENTE ON INGRESO.idUserPatient = PACIENTE.idUser
-    LEFT JOIN (
-        SELECT EHR.idEncounter, PL.name,
-               ROW_NUMBER() OVER (PARTITION BY EHR.idEncounter ORDER BY EHR.idRecord DESC) AS rn
+    OUTER APPLY (
+        SELECT TOP 1 PL.name
         FROM encounterHistoricalRecords EHR
         INNER JOIN physicalLocations PL ON EHR.idLocation = PL.idPhysicalLocation
-    ) UBIC ON UBIC.idEncounter = BS.idEncounter AND UBIC.rn = 1
+        WHERE BS.idEncounter = EHR.idEncounter
+        ORDER BY EHR.idRecord DESC
+    ) AS LOC_HIST
     WHERE
         BSOAPD.idContract IN $contratosFrec
         AND BSOAPD.idPlan  NOT IN $exclPlanesFrec
@@ -481,7 +483,7 @@ $queryCupPrincipal = "
             WHEN BS.state = 'E' THEN 'ELIMINADA'
             WHEN BS.state = 'F' THEN 'FACTURADA'
         END                                                                     AS [ESTADO DE VENTA],
-        UBIC.name                                                               AS [ULTIMA UBICACION DEL PACIENTE],
+        LOC_HIST.name                                                           AS [ULTIMA UBICACION DEL PACIENTE],
         PROD.legalCode                                                          AS CUPS,
         CAST(BSOAPD.quantityBill AS INT)                                        AS CANTIDAD,
         PROD.name                                                               AS PRODUCTO,
@@ -511,12 +513,13 @@ $queryCupPrincipal = "
     INNER JOIN contractPlans  PLANES ON BSOAPD.idPlan        = PLANES.idPlan
     INNER JOIN users          U     ON BS.idUserRecord       = U.idUser
     INNER JOIN users          PACIENTE ON INGRESO.idUserPatient = PACIENTE.idUser
-    LEFT JOIN (
-        SELECT EHR.idEncounter, PL.name,
-               ROW_NUMBER() OVER (PARTITION BY EHR.idEncounter ORDER BY EHR.idRecord DESC) AS rn
+    OUTER APPLY (
+        SELECT TOP 1 PL.name
         FROM encounterHistoricalRecords EHR
         INNER JOIN physicalLocations PL ON EHR.idLocation = PL.idPhysicalLocation
-    ) UBIC ON UBIC.idEncounter = BS.idEncounter AND UBIC.rn = 1
+        WHERE BS.idEncounter = EHR.idEncounter
+        ORDER BY EHR.idRecord DESC
+    ) AS LOC_HIST
     WHERE
         PT.idProductType IN $productTypesCup
         AND BS.state <> 'E'
