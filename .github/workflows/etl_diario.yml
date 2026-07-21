@@ -1,8 +1,10 @@
 name: "ETL Diario: Azure SQL to Supabase"
 
 on:
-  schedule:
-    - cron: '0 5 * * *'   # 00:00 AM Colombia (UTC-5)
+  # DESACTIVADO 2026-07-21: en pausa mientras se redefine el uso de la app.
+  # Reactivar descomentando el bloque `schedule` de abajo.
+  # schedule:
+  #   - cron: '0 5 * * *'   # 00:00 AM Colombia (UTC-5)
   workflow_dispatch:
     inputs:
       runner:
